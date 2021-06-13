@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    group 'io.github.karlatemp'
+    version '1.0.0'
+
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    def asmVer = '9.1'
+    // https://mvnrepository.com/artifact/org.ow2.asm/asm
+    implementation group: 'org.ow2.asm', name: 'asm', version: asmVer
+    implementation group: 'org.ow2.asm', name: 'asm-tree', version: asmVer
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: asmVer
+    implementation group: 'org.ow2.asm', name: 'asm-commons', version: asmVer
+
+}
+
+test {
+    useJUnitPlatform()
+}
