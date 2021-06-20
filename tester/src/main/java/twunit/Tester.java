@@ -14,6 +14,14 @@ public class Tester {
         System.out.println("Hello World!");
         A = 10;
         Mock.run();
+        System.out.println("Test repeat: " + "WZXT".repeat(3));
+        //noinspection RedundantSuppression
+        try {
+            //noinspection ConstantConditions,ResultOfMethodCallIgnored
+            ((String) null).repeat(5);
+        } catch (Throwable e) {
+            e.printStackTrace(System.out);
+        }
     }
 
     public static class Mock {

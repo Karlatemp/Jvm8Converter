@@ -16,6 +16,10 @@ import java.util.zip.ZipOutputStream;
 
 public class Jvm8Converter {
     public static final int ASMV = Opcodes.ASM9;
+    /**
+     * Redirect newer jdk methods
+     */
+    public static boolean redirectNewMethods = true;
 
     public static void main(String[] args) throws Exception {
         var out = new File("build/dump/tester-1.2.3.jar");
@@ -384,18 +388,22 @@ public class Jvm8Converter {
             }
 
             String stringFactoryName = null;
-            if (hasStringFactoryCall) {
-                var cfs = List.of(StringCF.class, StringCCF.class, JInvokeCF.class);
+            String pkg;
+            {
                 var pkgedClasses = classes.stream().filter(it -> it.name.indexOf('/') != -1)
                         .toArray(ClassNode[]::new);
-                var pkg = pkgedClasses.length == 0
+                pkg = pkgedClasses.length == 0
                         ? "stasdcj/"
                         : Optional.of(pkgedClasses[Math.abs(new Random().nextInt()) % pkgedClasses.length])
                         .map(it -> it.name.substring(0, it.name.lastIndexOf('/') + 1)).get();
                 pkg += UUID.randomUUID() + "/";
+            }
+            var ngener = new Kit.NameGenerator(() -> UUID.randomUUID().toString());
+            if (hasStringFactoryCall) {
+                var cfs = List.of(StringCF.class, StringCCF.class, JInvokeCF.class);
                 var mappings = new HashMap<String, String>();
                 for (var klass : cfs) {
-                    mappings.put(klass.getName().replace('.', '/'), pkg + UUID.randomUUID());
+                    mappings.put(klass.getName().replace('.', '/'), pkg + ngener.get());
                 }
                 var remapper = new SimpleRemapper(mappings);
                 for (var klass : cfs) {
@@ -410,7 +418,9 @@ public class Jvm8Converter {
                 }
 
             }
-
+            if (redirectNewMethods) {
+                MethodBridgeMap.inject(classes, pkg, ngener);
+            }
             // replace calls
             for (var klass : classes) {
                 klass.version = Opcodes.V1_8;
@@ -587,7 +597,9 @@ public class Jvm8Converter {
             // avoid optimizing it at the expense of makeConcatWithConstants
 
             // Mock the recipe to reuse the concat generator code
-            String recipe = "\u0001".repeat(concatType.parameterCount());
+            char[] c = new char[concatType.parameterCount()];
+            Arrays.fill(c, '\u0001');
+            String recipe = new String(c);
             return makeConcatWithConstants(lookup, name, concatType, recipe);
         }
 
